@@ -1,0 +1,11 @@
+{
+    "name": "semver-check",
+    "version": "0.0.1",
+    "dependencies": {
+        "semver": ">=7.3",
+        "yargs": "^17.7.1"
+    },
+    "engines": {
+        "node": ">=12"
+    }
+}
