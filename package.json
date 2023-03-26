@@ -1,11 +1,16 @@
 {
-    "name": "semver-check",
+    "name": "engine-check",
     "version": "0.0.1",
     "dependencies": {
         "semver": ">=7.3",
         "yargs": "^17.7.1"
     },
+    "devDependencies": {
+        "@types/node": "^12.20",
+        "typescript": "^5.0.2"
+    },
     "engines": {
-        "node": ">=12"
+        "node": ">=12.20",
+        "npm": ">=7"
     }
 }
