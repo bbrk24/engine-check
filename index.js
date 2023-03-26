@@ -65,6 +65,8 @@ const run = argv => {
     if (lockfile.lockfileVersion == null || lockfile.lockfileVersion < 2) {
         error("Older lockfiles don't include the engines object. Please upgrade to lockfile v2 or v3.");
         return;
+    } else if (lockfile.lockfileVersion > 3 && !argv.quiet) {
+        console.warn(`Lockfile v${lockfile.lockfileVersion} is newer than expected.`);
     }
 
     /**

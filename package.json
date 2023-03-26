@@ -1,6 +1,8 @@
 {
     "name": "engine-check",
-    "version": "0.0.1",
+    "version": "0.1.0",
+    "license": "MIT",
+    "description": "A sanity check for your lockfile",
     "dependencies": {
         "semver": ">=7.3",
         "yargs": "^17.7.1"
@@ -12,5 +14,8 @@
     "engines": {
         "node": ">=12.20",
         "npm": ">=7"
+    },
+    "bin": {
+        "engine-check": "index.js"
     }
 }
