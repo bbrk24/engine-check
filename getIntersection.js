@@ -1,4 +1,4 @@
-// I'm not using ts-check here because the types are incomplete
+// I'm not using ts-check here because TS doesn't know that the Range constructor can take a Comparator
 
 const { Comparator, Range, cmp } = require('semver');
 
@@ -13,14 +13,11 @@ const getComparatorIntersection = (a, b) => {
     if (a.value === '') return new Range(b);
     if (b.value === '') return new Range(a);
     // Either input is "exact match"
-    if (a.operator === '') return b.test(a.semver) ? new Range(a) : null;
-    if (b.operator === '') return a.test(b.semver) ? new Range(b) : null;
+    if (a.operator === '' || a.operator === '=') return b.test(a.semver) ? new Range(a) : null;
+    if (b.operator === '' || b.operator === '=') return a.test(b.semver) ? new Range(b) : null;
 
     // If they both go the same direction, pick the more restrictive one
-    if (
-        (a.operator[0] === '>' && b.operator[0] === '>') ||
-        (a.operator[0] === '<' && b.operator[0] === '<')
-    ) {
+    if (a.operator[0] === b.operator[0]) {
         if (b.operator[1] === '=')
             return new Range(a.test(b.semver) ? b : a);
         return new Range(b.test(a.semver) ? a : b);
@@ -53,7 +50,64 @@ const getUnion = (a, b) => {
     return new Range(`${a} || ${b}`);
 };
 
-const any = new Comparator('>=0.0.0');
+const any = new Range('*');
+
+/**
+ * @param {readonly Comparator[]} set1 
+ * @param {readonly Comparator[]} set2 
+ * @returns {Range | null}
+ */
+const comparatorSetIntersect = (set1, set2) => {
+    const lowerBounds = [];
+    const upperBounds = [];
+    const others = [];
+
+    for (const comp of set1.concat(set2)) {
+        switch (comp.operator[0]) {
+            case '<':
+                upperBounds.push(comp);
+                break;
+            case '>':
+                lowerBounds.push(comp);
+                break;
+            default:
+                others.push(comp);
+                break;
+        }
+    }
+
+    /**
+     * @param {Range | null} a
+     * @param {Comparator} b
+     * @returns {Range | null}
+     */
+    const reduceFn = (a, b) => {
+        if (a === null) return null;
+        return getComparatorIntersection(
+            new Comparator(a.toString()),
+            b
+        );
+    };
+
+    const lower = lowerBounds.reduce(reduceFn, any);
+    const upper = upperBounds.reduce(reduceFn, any);
+    const exactOrAny = others.reduce(reduceFn, any);
+
+    if (exactOrAny === null || lower === null || upper === null) {
+        // No match
+        return null;
+    }
+
+    if (exactOrAny.range !== '') {
+        // only one version matches
+        return exactOrAny;
+    }
+
+    return getComparatorIntersection(
+        new Comparator(lower.toString()),
+        new Comparator(upper.toString())
+    );
+};
 
 /**
  * @param {Range} a
@@ -61,23 +115,8 @@ const any = new Comparator('>=0.0.0');
  * @returns {Range | null}
  */
 const getRangeIntersection = (a, b) => {
-    const fourWayIntersect = ([w, x], [y, z]) => {
-        const [aMin, aMax] = w.operator[0] === '<' ? [w, x || any] : [x || any, w];
-        const [bMin, bMax] = y.operator[0] === '<' ? [y, z || any] : [z || any, y];
-
-        try {
-            const lower = getComparatorIntersection(aMin, bMin).toString();
-            const upper = getComparatorIntersection(aMax, bMax).toString();
-            return getComparatorIntersection(new Comparator(lower), new Comparator(upper));
-        } catch {
-            return null;
-        }
-    };
-
     return a.set.map(aRange =>
-        b.set.map(bRange =>
-            fourWayIntersect(aRange, bRange)
-        ).reduce(getUnion, null)
+        b.set.map(bRange => comparatorSetIntersect(aRange, bRange)).reduce(getUnion, null)
     ).reduce(getUnion, null);
 };
 

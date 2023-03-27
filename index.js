@@ -111,6 +111,8 @@ const run = argv => {
                 if (+firstMinor + 1 === +secondMinor) return `~${major}.${firstMinor}.${patch}`;
                 return match;
             })
+            // Replace e.g. '>=1.0.0 <=1.2.3' with '1.0.0 - 1.2.3'
+            .replace(/>=([^\s<>=^~]+) <=([^\s<>=^~]+)/g, (match, first, second) => `${first} - ${second}`)
             // Insert spaces around ||
             .replace(/\|\|/g, ' || ');
         
