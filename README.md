@@ -26,3 +26,4 @@ Options:
 - `--lockfile <path>`: Sets the location of the lockfile. If not given, defaults to "./package-lock.json".
 - `--package <path>`: Sets the location of the package.json. If not given, defaults to "./package.json".
 - `--engine <string>`: Which engine to check. If not given, defaults to "node".
+- `--find-limits`: Instead of validating package.json, find the limiting packages in the lockfile. Mutually exclusive with `--package`.
