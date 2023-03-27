@@ -4,6 +4,7 @@
 const fs = require('fs');
 const semver = require('semver');
 const yargs = require('yargs');
+const getIntersection = require('./getIntersection.js');
 
 const argv = yargs(process.argv.slice(2))
     .alias({ v: 'version' })
@@ -72,24 +73,48 @@ const run = argv => {
         .filter(el => el[0] && el[2]);
 
     if (argv.findLimits) {
-        /** @type {Set<readonly [string, string, string]>} */
-        const limitList = new Set();
+        // Currently unused. Could find which exact packages are limiting it.
+        // /** @type {Set<readonly [string, string, string]>} */
+        // const limitList = new Set();
+        // outer: for (const triple of versions) {
+        //     for (const limit of limitList) {
+        //         if (semver.subset(limit[2], triple[2])) {
+        //             continue outer;
+        //         }
+        //         if (semver.subset(triple[2], limit[2])) {
+        //             limitList.delete(limit);
+        //         }
+        //     }
+        //     limitList.add(triple);
+        // }
 
-        outer: for (const triple of versions) {
-            for (const limit of limitList) {
-                if (semver.subset(limit[2], triple[2])) {
-                    continue outer;
-                }
-                if (semver.subset(triple[2], limit[2])) {
-                    limitList.delete(limit);
-                }
+        /** @type {semver.Range | null} */
+        let intersection = new semver.Range('*');
+
+        for (const [, , version] of versions) {
+            intersection = getIntersection(version, intersection);
+            if (intersection === null) {
+                error('No valid intersection of ranges exists.');
+                return;
             }
-            limitList.add(triple);
         }
 
-        for (const [packageName, packageVersion, engineVersions] of limitList) {
-            console.log(`${packageName}@${packageVersion} requires ${argv.engine} "${engineVersions}".`);
-        }
+        let cleanStr = intersection.toString()
+            // Replace e.g. '>=1.0.0 <2.0.0-0' with '^1.0.0'
+            .replace(/>=([1-9]\d*)\.(\d+\.\d+) <(\d+)\.0\.0-0/g, (match, firstMajor, firstMinorPatch, secondMajor) => {
+                if (+firstMajor + 1 === +secondMajor) return `^${firstMajor}.${firstMinorPatch}`;
+                return match;
+            })
+            // Replace e.g. '>=1.0.0 <1.1.0-0' with '~1.0.0'
+            .replace(/>=(\d+)\.(\d+)\.(\d+) <\1\.(\d+)\.0-0/g, (match, major, firstMinor, patch, secondMinor) => {
+                if (major === '0' && firstMinor === '0') return match;
+                if (+firstMinor + 1 === +secondMinor) return `~${major}.${firstMinor}.${patch}`;
+                return match;
+            })
+            // Insert spaces around ||
+            .replace(/\|\|/g, ' || ');
+        
+        console.log(cleanStr);
     } else {
         /** @type {{ engines?: Partial<Record<string, string>>}} */
         const package = JSON.parse(fs.readFileSync(argv.package || './package.json').toString());
