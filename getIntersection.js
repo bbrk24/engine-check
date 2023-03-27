@@ -99,8 +99,9 @@ const comparatorSetIntersect = (set1, set2) => {
     }
 
     if (exactOrAny.range !== '') {
-        // only one version matches
-        return exactOrAny;
+        // only one version can match
+        if (upper.test(exactOrAny.toString()) && lower.test(exactOrAny.toString())) return exactOrAny;
+        return null;
     }
 
     return getComparatorIntersection(
