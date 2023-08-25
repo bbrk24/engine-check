@@ -4,7 +4,7 @@
     "license": "MIT",
     "description": "A sanity check for your lockfile",
     "dependencies": {
-        "semver": "^7.3",
+        "semver": "^7.3.6",
         "yargs": "^17.7.1"
     },
     "devDependencies": {

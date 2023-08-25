@@ -1,3 +1,4 @@
+'use strict';
 // I'm not using ts-check here because TS doesn't know that the Range constructor can take a Comparator
 
 const { Comparator, Range, cmp } = require('semver');

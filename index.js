@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // @ts-check
+'use strict';
 
 const fs = require('fs');
 const semver = require('semver');
@@ -118,24 +119,26 @@ const run = argv => {
         
         console.log(cleanStr);
     } else {
-        /** @type {{ engines?: Partial<Record<string, string>>}} */
-        const package = JSON.parse(fs.readFileSync(argv.package || './package.json').toString());
+        const fileName = argv.package || './package.json';
 
-        if (!package.engines || !package.engines[argv.engine]) {
+        /** @type {{ engines?: Partial<Record<string, string>>}} */
+        const packageJson = JSON.parse(fs.readFileSync(fileName).toString());
+
+        if (!packageJson.engines || !packageJson.engines[argv.engine]) {
             process.exitCode = 1;
-            console.error(`No engines.${[argv.engine]} is present in ${argv.package}.`);
+            console.error(`No engines.${[argv.engine]} is present in ${fileName}.`);
             return;
         }
-        if (!semver.validRange(package.engines[argv.engine])) {
+        if (!semver.validRange(packageJson.engines[argv.engine])) {
             error(
-                `engines.${[argv.engine]} "${package.engines[argv.engine]}" is not a valid semver range.`
+                `engines.${[argv.engine]} "${packageJson.engines[argv.engine]}" is not a valid semver range.`
             );
             return;
         }
 
         for (const [packageName, packageVersion, engineVersions] of versions) {
             /** @ts-expect-error It can do narrowing on dot access but not bracket access */
-            if (!semver.subset(package.engines[argv.engine], engineVersions)) {
+            if (!semver.subset(packageJson.engines[argv.engine], engineVersions)) {
                 error(`${packageName}@${packageVersion} requires ${argv.engine} "${engineVersions}".`);
             }
         }
