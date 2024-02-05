@@ -4,15 +4,16 @@
     "license": "MIT",
     "description": "A sanity check for your lockfile",
     "dependencies": {
-        "semver": "^7.3.6",
-        "yargs": "^17.7.1"
+        "lodash": "^4.17.20",
+        "semver": "^7.3.7",
+        "yargs": "^17.7.2"
     },
     "devDependencies": {
-        "@types/node": "^12.20",
-        "typescript": "^5.0.2"
+        "@types/node": "^14.17",
+        "typescript": "^5.1.2"
     },
     "engines": {
-        "node": ">=12.20",
+        "node": ">=14.17",
         "npm": ">=7"
     },
     "bin": {

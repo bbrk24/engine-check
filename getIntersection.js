@@ -2,6 +2,7 @@
 // I'm not using ts-check here because TS doesn't know that the Range constructor can take a Comparator
 
 const { Comparator, Range, cmp } = require('semver');
+const _ = require('lodash');
 
 /**
  * @param {Comparator} a
@@ -48,7 +49,11 @@ const getComparatorIntersection = (a, b) => {
 const getUnion = (a, b) => {
     if (!a) return b instanceof Comparator ? new Range(b) : b;
     if (!b) return a instanceof Comparator ? new Range(a) : a;
-    return new Range(`${a} || ${b}`);
+    // Determine the unique comparators and make a range out of those
+    const aComparators = a instanceof Range ? a.set : [[a]];
+    const bComparators = b instanceof Range ? b.set : [[b]];
+    const comparators = _.uniqWith(aComparators.concat(bComparators), _.isEqual);
+    return new Range(comparators.map(x => x.join(' ')).join('||'));
 };
 
 const any = new Range('*');
